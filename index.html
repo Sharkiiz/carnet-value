@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Carnet value</title>
+<meta name="theme-color" content="#1F5C43">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Carnet value">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/icon-192.png">
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="supabase-db.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Spectral:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#E8EEE7; --sheet:#F6F9F5; --ink:#15241D; --muted:#5A6B62; --rule:#C9D5CB;
+  --green:#1F5C43; --gold:#9C7A22; --red:#A33B30; --chip:#DCE6DC;
+  --serif:"Spectral", Georgia, "Times New Roman", serif;
+  --sans:"Public Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color-scheme: light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#101914; --sheet:#17231C; --ink:#E3ECE5; --muted:#93A69A; --rule:#2B3B31;
+    --green:#6FBF94; --gold:#D3AE52; --red:#E27B6E; --chip:#22332A; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#101914; --sheet:#17231C; --ink:#E3ECE5; --muted:#93A69A; --rule:#2B3B31;
+  --green:#6FBF94; --gold:#D3AE52; --red:#E27B6E; --chip:#22332A; color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;min-height:100%;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.45;padding-bottom:84px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--paper)}
+header{padding:18px 18px 6px;max-width:720px;margin:0 auto}
+h1{font-family:var(--serif);font-weight:700;font-size:1.7rem;margin:0;letter-spacing:-.01em}
+.sub{color:var(--muted);font-size:.9rem;margin:2px 0 0}
+main{max-width:720px;margin:0 auto;padding:8px 14px 24px}
+h2{font-family:var(--serif);font-size:1.3rem;margin:18px 4px 8px}
+.sheet{background:var(--sheet);border:1px solid var(--rule);border-radius:14px;padding:14px;margin-bottom:12px}
+.muted{color:var(--muted)}
+.small{font-size:.85rem}
+button,select,input{font:inherit;color:inherit}
+button{cursor:pointer}
+.btn{background:var(--green);color:var(--sheet);border:0;border-radius:10px;padding:10px 14px;font-weight:600}
+.btn.ghost{background:transparent;color:var(--green);border:1px solid var(--green)}
+.btn:focus-visible,input:focus-visible,select:focus-visible,.row:focus-visible,nav button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+input,select{background:var(--paper);border:1px solid var(--rule);border-radius:8px;padding:8px 10px;width:100%}
+label{display:block;font-size:.8rem;color:var(--muted);margin-bottom:3px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.filters{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.list{display:flex;flex-direction:column;gap:8px}
+.row{display:grid;grid-template-columns:1fr auto;gap:4px 10px;background:var(--sheet);border:1px solid var(--rule);border-radius:12px;padding:12px;text-align:left;width:100%}
+.row .name{font-weight:600}
+.row .meta{color:var(--muted);font-size:.82rem;grid-column:1/-1}
+.stamp{font-family:var(--serif);font-weight:700;font-size:1.35rem;min-width:56px;text-align:center;border:2px solid currentColor;border-radius:10px;padding:2px 8px;grid-row:1/3;align-self:center;transform:rotate(-3deg)}
+.s-hi{color:var(--green)} .s-mid{color:var(--gold)} .s-lo{color:var(--red)}
+.mos{position:relative;height:10px;border-radius:5px;background:var(--chip);margin:8px 0 2px;overflow:hidden}
+.mos span{position:absolute;top:0;bottom:0;left:0;border-radius:5px}
+.kv{display:grid;grid-template-columns:1fr auto;gap:6px 12px;font-size:.95rem}
+.kv dt{color:var(--muted)} .kv dd{margin:0;text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.bar{display:grid;grid-template-columns:96px 1fr 52px;align-items:center;gap:8px;font-size:.88rem;margin:6px 0}
+.bar .track{height:8px;background:var(--chip);border-radius:4px;overflow:hidden}
+.bar .fill{height:100%;background:var(--green)}
+.big{font-family:var(--serif);font-size:2.4rem;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.pos{color:var(--green)} .neg{color:var(--red)}
+.empty{text-align:center;padding:28px 12px;color:var(--muted)}
+.tag{display:inline-block;background:var(--chip);border-radius:6px;padding:1px 7px;font-size:.78rem;margin-right:4px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.ai{white-space:pre-wrap;font-size:.93rem;margin-top:10px}
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--sheet);border-top:1px solid var(--rule);display:grid;grid-template-columns:repeat(5,1fr);padding:6px 2px calc(6px + env(safe-area-inset-bottom,0px));z-index:20}
+nav button{background:none;border:0;padding:6px 2px;font-size:.78rem;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px;border-radius:8px}
+nav button svg{width:22px;height:22px}
+nav button[aria-current="page"]{color:var(--green);font-weight:700}
+.notice{background:var(--chip);border-radius:10px;padding:10px 12px;font-size:.88rem;margin-bottom:12px}
+details summary{cursor:pointer;color:var(--green);font-weight:600;margin:4px 0}
+.scrollx{overflow-x:auto}
+.sig{display:inline-block;border-radius:6px;padding:2px 8px;font-size:.78rem;font-weight:700}
+.sig-buy{background:var(--green);color:var(--sheet)} .sig-wait{background:var(--chip);color:var(--gold)} .sig-out{background:var(--chip);color:var(--red)} .sig-na{background:var(--chip);color:var(--muted)}
+.sig-keep{background:var(--chip);color:var(--green)} .sig-review{background:var(--red);color:var(--sheet)} .sig-over{background:var(--gold);color:var(--sheet)}
+.alert{margin-top:8px;font-size:.86rem}
+table.t{border-collapse:collapse;width:100%;font-size:.85rem;font-variant-numeric:tabular-nums}
+table.t th,table.t td{padding:6px 6px;border-bottom:1px solid var(--rule);text-align:right;white-space:nowrap}
+table.t th:first-child,table.t td:first-child{text-align:left}
+table.t th{color:var(--muted);font-weight:600}
+textarea{font:inherit;color:inherit;background:var(--paper);border:1px solid var(--rule);border-radius:8px;padding:8px 10px;width:100%;min-height:150px;font-variant-numeric:tabular-nums}
+.chart{width:100%;height:auto;display:block;margin-top:8px}
+.legend{display:flex;gap:14px;font-size:.8rem;color:var(--muted);margin-top:4px}
+.legend i{display:inline-block;width:14px;height:3px;vertical-align:middle;margin-right:5px}
+.tipbtn{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;margin-left:5px;border-radius:50%;border:1px solid var(--green);background:transparent;color:var(--green);font:600 11px/1 var(--serif);font-style:italic;padding:0;vertical-align:1px;cursor:pointer}
+.tipbtn:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+#tipbox{position:fixed;left:10px;right:10px;bottom:calc(76px + env(safe-area-inset-bottom,0px));max-width:560px;margin:0 auto;background:var(--sheet);color:var(--ink);border:1px solid var(--green);border-radius:14px;padding:14px 16px;box-shadow:0 8px 28px rgba(0,0,0,.18);z-index:30}
+#tipbox[hidden]{display:none}
+#tipbox h3{font-family:var(--serif);font-size:1.1rem;margin:0 32px 6px 0}
+#tipbox p{margin:0 0 6px;font-size:.93rem}
+#tipbox .ex{color:var(--muted);font-size:.86rem}
+#tipbox .close{position:absolute;top:8px;right:8px;width:32px;height:32px;border:0;background:none;color:var(--muted);font-size:1.3rem;border-radius:8px}
+@media (prefers-reduced-motion:no-preference){#tipbox{animation:tipin .16s ease-out}@keyframes tipin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}}
+@media (max-width:380px){.grid3{grid-template-columns:1fr 1fr}}
+@media (prefers-reduced-motion:no-preference){.stamp{transition:transform .2s}.row:active .stamp{transform:rotate(0)}}
+#aiBox{display:none}
+</style>
+</head>
+<body>
+<header>
+  <h1>Carnet value</h1>
+  <p class="sub" id="status">Chargement des données…</p>
+</header>
+<main id="view"></main>
+
+<div id="tipbox" role="dialog" aria-live="polite" aria-labelledby="tipTitle" hidden><button class="close" id="tipClose" aria-label="Fermer l’explication">×</button><h3 id="tipTitle"></h3><p id="tipText"></p><p class="ex" id="tipEx"></p></div>
+<nav aria-label="Sections">
+  <button data-tab="screener" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 5h18M6 12h12M10 19h4"/></svg>Screener</button>
+  <button data-tab="fiche"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/></svg>Fiche</button>
+  <button data-tab="calc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 12h2M14 12h2M8 16h2M14 16h2"/></svg>Valeur</button>
+  <button data-tab="portfolio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 8h16v11H4zM9 8V5h6v3"/></svg>Portefeuille</button>
+  <button data-tab="sim"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V5M4 19h16M7 15l4-4 3 3 5-6"/></svg>Simulateur</button>
+</nav>
+
+<script>
+"use strict";
+const S = { tab:"screener", stocks:{}, positions:{}, history:{}, simT:null, simP:{mos:30,r:9,sell:"value"}, plan:{amount:200,lines:5,fee:1,frac:false}, sel:null, db:null, sample:null, ai:{},
+  f:{ perMax:"", roeMin:"", debtMax:"", scoreMin:"", sector:"", sort:"score" } };
+
+const FIELDS = [
+  ["name","Nom","text"],["sector","Secteur","text"],["price","Cours (€)","num"],["eps","BPA (€)","num"],
+  ["fcfps","FCF par action (€)","num"],["bvps","Valeur comptable/action (€)","num"],["dps","Dividende/action (€)","num"],
+  ["roe","ROE (%)","num"],["roic","ROIC (%)","num"],["opMargin","Marge opérationnelle (%)","num"],
+  ["growth5y","Croissance BPA 5 ans (%/an)","num"],["netDebtEbitda","Dette nette / EBITDA","num"],
+  ["moat","Moat (0 à 5)","num"],["intrinsic","Valeur intrinsèque (€)","num"],["notes","Notes","text"],["updatedAt","Données au","text"]
+];
+
+const fmt = (v,d=1)=> v==null||isNaN(v) ? "—" : Number(v).toLocaleString("fr-FR",{maximumFractionDigits:d,minimumFractionDigits:0});
+const eur = v => v==null||isNaN(v) ? "—" : Number(v).toLocaleString("fr-FR",{style:"currency",currency:"EUR",maximumFractionDigits:2});
+const num = v => (v===""||v==null||isNaN(Number(v))) ? null : Number(v);
+const esc = s => String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+/* Méthode Buffett : valeur intrinsèque par DCF, achat avec 30 % de marge de sécurité */
+const MOS = 30, R = 9, GT = 2.5;
+function dcf(base,g1,g2,gt,r){
+  if(!(base>0) || r<=gt) return null;
+  let cf=base, pv=0; for(let y=1;y<=10;y++){cf*=1+(y<=5?g1:g2)/100; pv+=cf/Math.pow(1+r/100,y);}
+  return pv + cf*(1+gt/100)/((r-gt)/100)/Math.pow(1+r/100,10);
+}
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+function autoIV(s){ const base=s.fcfps ?? s.eps; const g=clamp(s.growth5y ?? 6,0,12); return dcf(base,g,g/2,GT,R); }
+function ivOf(s){ if(s.intrinsic) return {iv:s.intrinsic,auto:false}; const a=autoIV(s); return {iv:a,auto:a!=null}; }
+function derived(s){
+  const per = s.price && s.eps>0 ? s.price/s.eps : null;
+  const fcfY = s.price && s.fcfps!=null ? s.fcfps/s.price*100 : null;
+  const dy = s.price && s.dps!=null ? s.dps/s.price*100 : null;
+  const graham = s.eps>0 && s.bvps>0 ? Math.sqrt(22.5*s.eps*s.bvps) : null;
+  const {iv,auto} = ivOf(s);
+  const mos = iv && s.price ? (1 - s.price/iv)*100 : null;
+  const buy = iv ? iv*(1-MOS/100) : null;
+  return {per,fcfY,dy,graham,iv,ivAuto:auto,mos,buy};
+}
+function scoreOf(s){
+  const d = derived(s); const parts = [];
+  let q=0, qm=0; const r = s.roic ?? s.roe;
+  if(r!=null){qm+=15; q+= r>=20?15:r>=15?11:r>=10?5:0;}
+  if(s.opMargin!=null){qm+=12; q+= s.opMargin>=20?12:s.opMargin>=12?7:s.opMargin>=6?3:0;}
+  if(s.growth5y!=null){qm+=8; q+= s.growth5y>=8?8:s.growth5y>=4?5:s.growth5y>=0?2:0;}
+  parts.push(["Qualité",q,qm,35]);
+  let m=0,mm=0; if(s.moat!=null){mm=25; m=clamp(s.moat,0,5)*5;}
+  parts.push(["Moat",m,mm,25]);
+  let b=0,bm=0;
+  if(s.netDebtEbitda!=null){bm=15; const x=s.netDebtEbitda; b= x<=0?15:x<=1?12:x<=2?9:x<=3?4:0;}
+  parts.push(["Solidité",b,bm,15]);
+  let v=0, vm=0;
+  if(d.mos!=null){vm=25; v= d.mos>=MOS?25:d.mos>=15?15:d.mos>=0?8:0;}
+  else if(d.per!=null){vm=25; v= d.per<=15?20:d.per<=20?12:d.per<=25?6:0;}
+  parts.push(["Prix",v,vm,25]);
+  const got = parts.reduce((a,p)=>a+p[1],0), max = parts.reduce((a,p)=>a+p[2],0);
+  return { score: max? Math.round(got/max*100) : null, coverage: Math.round(max), parts };
+}
+/* Signal Buffett : une bonne entreprise (moat, rentabilité, dette) achetée avec la marge de sécurité */
+function signalOf(s){
+  if(/Banque|Assurance|Immobilier/i.test(s.sector||"")) return {k:"na",l:"Méthode inadaptée"};
+  const d=derived(s); const r=s.roic??s.roe;
+  const quality = (s.moat==null||s.moat>=4) && (r==null||r>=15) && (s.netDebtEbitda==null||s.netDebtEbitda<=2.5);
+  if(!quality) return {k:"out",l:"Hors critères"};
+  if(d.mos==null) return {k:"na",l:"Données insuffisantes"};
+  if(d.mos>=MOS) return {k:"buy",l:"Achat"};
+  return {k:"wait",l:"Trop cher"};
+}
+const sigHtml = s => { const g=signalOf(s); return `<span class="sig sig-${g.k}">${g.l}</span>`; };
+const cls = sc => sc==null?"s-mid":sc>=70?"s-hi":sc>=50?"s-mid":"s-lo";
+
+/* ---------- Bulles d’explication ---------- */
+const GLOSS = [
+  [/Valeur intrinsèque|Valeur est\./,"Valeur intrinsèque","Ce que vaut réellement l’entreprise, d’après l’argent qu’elle va gagner dans le futur, indépendamment du cours de Bourse. Ici, elle est calculée par DCF. « Auto » signifie qu’elle est estimée avec des hypothèses par défaut.","Si une action vaut 100 € et cote 70 €, elle est 30 % moins chère que sa valeur."],
+  [/Prix d’achat|Prix achat|Acheter sous/,"Prix d’achat Buffett","Le cours sous lequel la méthode conseille d’acheter : la valeur intrinsèque moins la marge de sécurité (30 %).","Valeur 100 € → on n’achète qu’en dessous de 70 €."],
+  [/Marge de sécurité|^Marge \(%\)/,"Marge de sécurité","L’écart entre la valeur estimée et le cours. C’est le coussin qui protège si tes calculs sont trop optimistes. Buffett et Graham exigent une marge importante avant d’acheter.","Valeur 100 €, cours 70 € : marge de 30 %."],
+  [/Marge opérationnelle|Marge op\./,"Marge opérationnelle","La part du chiffre d’affaires qui reste en bénéfice après les coûts de l’activité (avant intérêts et impôts). Une marge élevée et stable signale souvent un avantage concurrentiel.","20 % : sur 100 € de ventes, il reste 20 € de bénéfice d’exploitation."],
+  [/Flux de départ/,"Flux de départ","L’argent gagné par action aujourd’hui, point de départ du calcul. On prend le free cash-flow par action s’il est connu, sinon le BPA.",""],
+  [/FCF/,"Free cash-flow (FCF)","L’argent réellement disponible après avoir payé les dépenses et les investissements. Buffett l’appelle les « owner earnings » : ce qu’un propriétaire pourrait retirer de l’entreprise. Le rendement FCF = FCF par action / cours.","Rendement FCF de 5 % : pour 100 € investis, l’entreprise génère 5 € de cash par an."],
+  [/Rendement dividende|Rdt div|Dividende/,"Dividende et rendement","Le dividende est la part du bénéfice versée chaque année aux actionnaires. Le rendement = dividende / cours.","Dividende 3 € pour un cours de 100 € : rendement de 3 %."],
+  [/PER/,"PER (Price Earning Ratio)","Le cours divisé par le bénéfice par action. Il indique combien d’années de bénéfices tu paies. Plus il est bas, moins l’action est chère, mais une entreprise de qualité mérite souvent un PER plus élevé.","Cours 200 €, BPA 10 € : PER de 20. Graham visait moins de 15."],
+  [/BPA/,"BPA (bénéfice par action)","Le bénéfice net de l’entreprise divisé par le nombre d’actions : la part du bénéfice qui revient à une action.","Bénéfice 1 Md€, 100 millions d’actions : BPA de 10 €."],
+  [/ROIC|ROE/,"ROE et ROIC","La rentabilité de l’argent investi. Le ROE mesure le bénéfice par rapport aux capitaux propres ; le ROIC, par rapport à tout le capital investi (dette comprise), ce qui est plus fiable. Buffett cherche plus de 15 % durablement.","ROIC 20 % : chaque 100 € investis rapportent 20 € par an."],
+  [/Dette/,"Dette nette / EBITDA","Le nombre d’années de résultat d’exploitation (avant amortissements) nécessaires pour rembourser la dette. Un chiffre négatif signifie plus de trésorerie que de dette.","Moins de 2 : confortable. Plus de 3 : prudence."],
+  [/Nombre de Graham/,"Nombre de Graham","Un prix maximum rapide imaginé par Benjamin Graham, le maître de Buffett : racine carrée de (22,5 × BPA × valeur comptable par action). Il convient surtout aux entreprises classiques, peu aux entreprises à marques fortes.",""],
+  [/Formule de Graham/,"Formule de Graham","Une estimation de la valeur selon Graham, qui tient compte de la croissance et des taux d’intérêt. Indicative seulement, pour comparer avec le DCF.",""],
+  [/Valeur comptable/,"Valeur comptable par action","Ce que possède l’entreprise moins ce qu’elle doit (capitaux propres), divisé par le nombre d’actions.",""],
+  [/Moat/,"Moat (avantage concurrentiel)","Le « fossé » qui protège un château, selon l’image de Buffett : ce qui empêche les concurrents de prendre les clients. Marque, coûts de changement, effets de réseau, coûts bas ou réglementation. Noté ici de 0 à 5.","Hermès (marque) : 5. Un constructeur automobile : 1."],
+  [/Taux d’actualisation|^Taux/,"Taux d’actualisation","Le rendement minimum que tu exiges. Il sert à ramener l’argent futur en valeur d’aujourd’hui : 100 € dans 10 ans valent moins que 100 € maintenant. Plus il est élevé, plus la valeur calculée est prudente.","9 % est une valeur courante pour des actions."],
+  [/Croissance perpétuelle/,"Croissance perpétuelle","La croissance supposée après 10 ans, indéfiniment. Elle doit rester proche de l’inflation, sinon la valeur explose artificiellement.","Entre 2 et 3 %."],
+  [/Croissance/,"Croissance","L’augmentation moyenne par an des bénéfices. C’est l’hypothèse qui pèse le plus dans la valeur intrinsèque : mieux vaut être prudent.",""],
+  [/valeur terminale/i,"Valeur terminale","La valeur de tous les flux après la 10e année. Si elle représente l’essentiel du résultat, le calcul dépend beaucoup d’hypothèses lointaines.",""],
+  [/Prix de revient|PRU/,"Prix de revient (PRU)","Le prix moyen auquel tu as acheté tes actions, frais compris.",""],
+  [/^Qualité/,"Critère qualité","Note la rentabilité (ROIC/ROE), la marge opérationnelle et la croissance des bénéfices. 35 points sur 100 dans le score.",""],
+  [/^Solidité/,"Critère solidité","Note l’endettement (dette nette / EBITDA) : une entreprise peu endettée survit mieux aux crises. 15 points sur 100.",""],
+  [/^Prix$/,"Critère prix","Note la marge de sécurité entre le cours et la valeur intrinsèque, ou à défaut le PER. 25 points sur 100.",""],
+  [/Revente/,"Règle de revente","« À la valeur » : on vend quand le cours atteint la valeur estimée. « Jamais » : on garde, comme Buffett avec ses meilleures entreprises.",""],
+  [/lignes/,"Nombre de lignes","Le nombre d’actions différentes que tu veux détenir. Plus il y en a, moins une seule mauvaise surprise pèse sur ton portefeuille. Pour un particulier, 5 à 10 lignes de poids égal est un bon compromis ; Buffett lui-même dit que la diversification protège de ce qu’on ne sait pas.","5 lignes : chaque action vise 20 % du portefeuille."],
+  [/Frais/,"Frais par ordre","Ce que ton courtier facture à chaque achat. Avec de petits montants, les frais pèsent lourd : le plan regroupe donc tes achats sur peu d’actions par mois pour que les frais restent sous 1 % du montant.","1 € de frais sur un ordre de 200 € = 0,5 %."],
+  [/Fractions/,"Fractions d’actions","Certains courtiers permettent d’acheter un morceau d’action (ex. 0,15 action Hermès). Sinon, il faut acheter des actions entières : une action plus chère que ton budget du mois doit attendre que l’argent s’accumule.",""],
+  [/^(Conserver|Thèse à revoir|Très surévaluée)$/,"Alerte de vente","« Conserver » : rien n’a changé, on garde, même si le cours baisse. « Thèse à revoir » : l’entreprise s’est dégradée depuis ton achat (moat, rentabilité, marge, dette ou bénéfice) ; relis ton analyse et vends si la raison d’acheter a disparu. « Très surévaluée » : le cours dépasse de plus de 50 % la valeur intrinsèque ; Buffett vend rarement pour ça, mais alléger peut se discuter.","Une baisse du cours seule ne déclenche jamais d’alerte."],
+  [/Score/,"Score sur 100","Une note qui combine qualité (35), moat (25), prix (25) et solidité (15). Les données manquantes sont ignorées : regarde le pourcentage de critères couverts.",""],
+  [/^(Achat|Trop cher|Hors critères|Données insuffisantes|Méthode inadaptée)$/,"Signal Buffett","« Achat » : entreprise de qualité (moat ≥ 4, rentabilité ≥ 15 %, dette raisonnable) ET cours 30 % sous la valeur. « Trop cher » : bonne entreprise, prix trop élevé. « Hors critères » : qualité insuffisante. « Méthode inadaptée » : banques, assurances et foncières, qui s’analysent autrement.",""]
+];
+function addTips(root){
+  root.querySelectorAll("dt,label,th,.bar>span:first-child,.sig").forEach(el=>{
+    if(el.closest(".row")||el.querySelector(".tipbtn")) return;
+    const txt=el.textContent.trim(); const i=GLOSS.findIndex(g=>g[0].test(txt)); if(i<0) return;
+    const b=document.createElement("button"); b.type="button"; b.className="tipbtn"; b.dataset.tip=i; b.textContent="i";
+    b.setAttribute("aria-label","Explication : "+GLOSS[i][1]); el.appendChild(b);
+  });
+}
+const tipbox=document.getElementById("tipbox");
+function showTip(i,from){ const g=GLOSS[i]; document.getElementById("tipTitle").textContent=g[1]; document.getElementById("tipText").textContent=g[2]; const ex=document.getElementById("tipEx"); ex.textContent=g[3]; ex.hidden=!g[3]; tipbox.hidden=false; tipbox._from=from; document.getElementById("tipClose").focus(); }
+function hideTip(){ if(tipbox.hidden) return; tipbox.hidden=true; if(tipbox._from&&document.body.contains(tipbox._from)) tipbox._from.focus(); }
+document.addEventListener("click",e=>{
+  const b=e.target.closest(".tipbtn"); if(b){ e.preventDefault(); e.stopPropagation(); showTip(+b.dataset.tip,b); return; }
+  if(!tipbox.hidden && !tipbox.contains(e.target)) hideTip();
+},true);
+document.getElementById("tipClose").addEventListener("click",hideTip);
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") hideTip(); });
+
+/* ---------- Rendu ---------- */
+const view = document.getElementById("view");
+function render(){
+  document.querySelectorAll("nav button").forEach(b=>b.setAttribute("aria-current", b.dataset.tab===S.tab?"page":"false"));
+  ({screener:rScreener, fiche:rFiche, calc:rCalc, portfolio:rPortfolio, sim:rSim})[S.tab]();
+  addTips(view);
+}
+function stocksArr(){ return Object.entries(S.stocks).map(([t,s])=>({t,...s,_sc:scoreOf(s),_d:derived(s)})); }
+
+function rScreener(){
+  const f=S.f; const sectors=[...new Set(stocksArr().map(s=>s.sector).filter(Boolean))].sort();
+  let arr = stocksArr().filter(s=>{
+    if(num(f.perMax)!=null && !(s._d.per!=null && s._d.per<=num(f.perMax))) return false;
+    const r=s.roic??s.roe; if(num(f.roeMin)!=null && !(r!=null && r>=num(f.roeMin))) return false;
+    if(num(f.debtMax)!=null && !(s.netDebtEbitda!=null && s.netDebtEbitda<=num(f.debtMax))) return false;
+    if(num(f.scoreMin)!=null && !(s._sc.score!=null && s._sc.score>=num(f.scoreMin))) return false;
+    if(f.sector && s.sector!==f.sector) return false; return true;
+  });
+  const key={score:s=>-(s._sc.score??-1), per:s=>s._d.per??999, mos:s=>-(s._d.mos??-999), name:s=>s.name||s.t}[f.sort];
+  arr.sort((a,b)=>{const x=key(a),y=key(b);return x<y?-1:x>y?1:0;});
+  view.innerHTML = `
+  <div class="sheet">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+      <div class="small">${S.req&&S.req.status==="pending"?`Mise à jour demandée le ${esc(new Date(S.req.requestedAt).toLocaleDateString("fr-FR"))}. Elle sera faite à la prochaine mise à jour automatique (chaque soir de semaine).`:S.req&&S.req.status==="done"?`Données mises à jour le ${esc(new Date(S.req.doneAt).toLocaleDateString("fr-FR"))}.`:"Mise à jour automatique chaque soir de semaine."}</div>
+      <button class="btn ghost" id="reqUpd" style="flex-shrink:0">${S.req&&S.req.status==="pending"?"Demandée":"Mettre à jour"}</button>
+    </div>
+    <p class="small muted" style="margin:6px 0 0">${Object.values(S.stocks).filter(s=>s.verified).length} fiche(s) vérifiée(s) sur rapport officiel, ${Object.values(S.stocks).filter(s=>!s.verified).length} estimée(s).</p>
+  </div>
+  <details class="sheet" ${Object.values(f).some(v=>v&&v!=="score")?"open":""}><summary>Filtres et tri</summary>
+    <div class="filters" style="margin-top:10px">
+      <div><label for="perMax">PER maximum</label><input id="perMax" inputmode="decimal" value="${esc(f.perMax)}" placeholder="ex. 20"></div>
+      <div><label for="roeMin">ROIC/ROE minimum (%)</label><input id="roeMin" inputmode="decimal" value="${esc(f.roeMin)}" placeholder="ex. 15"></div>
+      <div><label for="debtMax">Dette/EBITDA maximum</label><input id="debtMax" inputmode="decimal" value="${esc(f.debtMax)}" placeholder="ex. 2"></div>
+      <div><label for="scoreMin">Score minimum</label><input id="scoreMin" inputmode="numeric" value="${esc(f.scoreMin)}" placeholder="ex. 60"></div>
+      <div><label for="sector">Secteur</label><select id="sector"><option value="">Tous</option>${sectors.map(x=>`<option ${x===f.sector?"selected":""}>${esc(x)}</option>`).join("")}</select></div>
+      <div><label for="sort">Trier par</label><select id="sort">
+        <option value="score" ${f.sort==="score"?"selected":""}>Score</option><option value="per" ${f.sort==="per"?"selected":""}>PER croissant</option>
+        <option value="mos" ${f.sort==="mos"?"selected":""}>Marge de sécurité</option><option value="name" ${f.sort==="name"?"selected":""}>Nom</option></select></div>
+    </div></details>
+  <div class="list">${arr.length? arr.map(s=>rowHtml(s)).join("") : `<div class="empty">${Object.keys(S.stocks).length?"Aucune action ne passe ces filtres. Assouplis un critère.":"Ta liste est vide. Ajoute une action ci-dessous, ou importe les données de départ (voir le guide)."}</div>`}</div>
+  ${addFormHtml()}`;
+  ["perMax","roeMin","debtMax","scoreMin"].forEach(id=>view.querySelector("#"+id).addEventListener("change",e=>{S.f[id]=e.target.value;render();}));
+  view.querySelector("#sector").addEventListener("change",e=>{S.f.sector=e.target.value;render();});
+  view.querySelector("#sort").addEventListener("change",e=>{S.f.sort=e.target.value;render();});
+  view.querySelectorAll(".row").forEach(b=>b.addEventListener("click",()=>{S.sel=b.dataset.t;S.tab="fiche";render();window.scrollTo(0,0);}));
+  view.querySelector("#reqUpd").addEventListener("click",async()=>{
+    if(!S.db){toast("Demande impossible sans connexion.");return;}
+    const r={status:"pending",requestedAt:new Date().toISOString(),scope:"all"}; S.req=r; render();
+    try{await S.db.doc("requests/latest").set(r); toast("Demande enregistrée pour la prochaine mise à jour automatique.");}catch(e){toast("Échec de la demande.");}
+  });
+  bindAdd();
+}
+function rowHtml(s){
+  const sc=s._sc.score; const mos=s._d.mos;
+  return `<button class="row" data-t="${esc(s.t)}">
+    <span><span class="name">${esc(s.name||s.t)}</span> <span class="muted small">${esc(s.t)}</span></span>
+    <span class="stamp ${cls(sc)}" aria-label="Score ${sc??"inconnu"} sur 100">${sc??"?"}</span>
+    <span class="small">PER ${fmt(s._d.per)} · ${s.roic!=null?"ROIC":"ROE"} ${fmt(s.roic??s.roe)} % · Rdt ${fmt(s._d.dy)} %</span>
+    <span class="meta">${sigHtml(s)} ${s.verified?"":"<span class=\"tag\">estimé</span>"}${mos!=null?(mos>=0?`marge de sécurité ${fmt(mos,0)} %`:`${fmt(-mos,0)} % au-dessus de la valeur`):"valeur intrinsèque inconnue"}${s._d.ivAuto?" (auto)":""}</span>
+  </button>`;
+}
+function addFormHtml(){
+  return `<details class="sheet" style="margin-top:12px"><summary>Ajouter une action</summary>
+   <div class="grid2" style="margin-top:10px">
+    <div><label for="newT">Code (ex. MC, AI)</label><input id="newT" autocapitalize="characters"></div>
+    <div><label for="newN">Nom</label><input id="newN"></div></div>
+   <div class="actions"><button class="btn" id="addBtn">Ajouter</button></div></details>`;
+}
+function bindAdd(){
+  const b=view.querySelector("#addBtn"); if(!b) return;
+  b.addEventListener("click",async()=>{
+    const t=view.querySelector("#newT").value.trim().toUpperCase().replace(/[^A-Z0-9._-]/g,"");
+    const n=view.querySelector("#newN").value.trim();
+    if(!t){toast("Indique un code boursier.");return;}
+    await saveStock(t,{name:n||t}); S.sel=t; S.tab="fiche"; render();
+  });
+}
+
+function rFiche(){
+  const t=S.sel && S.stocks[S.sel] ? S.sel : Object.keys(S.stocks)[0];
+  if(!t){ view.innerHTML=`<div class="empty">Aucune action pour l’instant. Ajoute-en une depuis le screener.</div>`; return; }
+  S.sel=t; const s=S.stocks[t]; const d=derived(s); const sc=scoreOf(s);
+  const opts=Object.keys(S.stocks).sort().map(k=>`<option value="${esc(k)}" ${k===t?"selected":""}>${esc(S.stocks[k].name||k)}</option>`).join("");
+  const mosW = d.mos==null?0:Math.max(0,Math.min(100,Math.abs(d.mos)));
+  view.innerHTML = `
+  <div class="sheet"><label for="pick">Action</label><select id="pick">${opts}</select></div>
+  <div class="sheet">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+      <div><div class="name" style="font-weight:700;font-size:1.15rem">${esc(s.name||t)}</div>
+      <div class="muted small">${esc(s.sector||"Secteur non renseigné")}${s.updatedAt?` · données au ${esc(s.updatedAt)}`:""}</div>
+      <div style="margin-top:6px">${sigHtml(s)} <span class="tag">${s.verified?"Vérifié sur rapport officiel":"Données estimées"}</span></div>${(()=>{ const a=sellAlert(t); return a?`<div class="alert"><span class="muted small">Tu la détiens : </span><span class="sig sig-${a.k}">${a.l}</span>${a.reasons.length?` <span class="small muted">${esc(a.reasons.join(" · "))}</span>`:""}</div>`:""; })()}</div>
+      <div class="stamp ${cls(sc.score)}" style="font-size:1.8rem">${sc.score??"?"}</div>
+    </div>
+    <p class="small muted" style="margin:8px 0 0">Score sur 100, calculé sur ${sc.coverage} % des critères (les données manquantes sont ignorées).</p>
+    ${sc.parts.map(p=>`<div class="bar"><span>${p[0]}</span><span class="track"><span class="fill" style="width:${p[2]?p[1]/p[2]*100:0}%"></span></span><span class="muted">${p[2]?Math.round(p[1]/p[2]*p[3]):"—"}/${p[3]}</span></div>`).join("")}
+  </div>
+  <div class="sheet">
+    <dl class="kv">
+      <dt>Cours</dt><dd>${eur(s.price)}</dd>
+      <dt>PER</dt><dd>${fmt(d.per)}</dd>
+      <dt>Rendement FCF</dt><dd>${d.fcfY!=null?fmt(d.fcfY)+" %":"—"}</dd>
+      <dt>Rendement dividende</dt><dd>${d.dy!=null?fmt(d.dy)+" %":"—"}</dd>
+      <dt>${s.roic!=null?"ROIC":"ROE"}</dt><dd>${(s.roic??s.roe)!=null?fmt(s.roic??s.roe)+" %":"—"}</dd>
+      <dt>Marge opérationnelle</dt><dd>${s.opMargin!=null?fmt(s.opMargin)+" %":"—"}</dd>
+      <dt>Dette nette / EBITDA</dt><dd>${fmt(s.netDebtEbitda)}</dd>
+      <dt>Nombre de Graham</dt><dd>${eur(d.graham)}</dd>
+      <dt>Valeur intrinsèque${d.ivAuto?" (auto)":""}</dt><dd>${eur(d.iv)}</dd>
+      <dt>Prix d’achat (marge ${MOS} %)</dt><dd>${eur(d.buy)}</dd>
+    </dl>
+    ${d.ivAuto?`<p class="small muted" style="margin:8px 0 0">Valeur auto : DCF sur le ${s.fcfps!=null?"FCF":"BPA"}, croissance ${fmt(clamp(s.growth5y??6,0,12))} % puis moitié, taux ${R} %. Affine-la dans l’onglet Valeur.</p>`:""}
+    ${d.mos!=null?`<div class="mos" aria-hidden="true"><span style="width:${mosW}%;background:${d.mos>=0?"var(--green)":"var(--red)"}"></span></div>
+    <div class="small ${d.mos>=0?"pos":"neg"}">${d.mos>=0?`Marge de sécurité de ${fmt(d.mos,0)} %`:`Cours ${fmt(-d.mos,0)} % au-dessus de la valeur estimée`}</div>`:""}
+    ${s.notes?`<p class="small" style="margin:10px 0 0">${esc(s.notes)}</p>`:""}
+    <div class="actions"><button class="btn" id="toCalc">Calculer la valeur</button><button class="btn ghost" id="toWatch">${S.positions[t]?"Dans le portefeuille":"Suivre"}</button></div>
+  </div>
+  <div class="sheet" id="aiBox">
+    <div style="font-weight:600">Analyse qualitative</div>
+    <p class="small muted" style="margin:4px 0 0">Claude répond avec ses connaissances générales, sans données en temps réel : à vérifier.</p>
+    <div class="actions"><button class="btn ghost" id="aiBtn" ${S.sample?"":"disabled"}>Analyser le moat et le management</button></div>
+    <div class="ai" id="aiOut">${esc(S.ai[t]||"")}</div>
+  </div>
+  <details class="sheet"><summary>Modifier les données</summary>
+    <div class="grid2" style="margin-top:10px">${FIELDS.map(([k,l,ty])=>`<div ${k==="notes"?'style="grid-column:1/-1"':""}><label for="f_${k}">${l}</label><input id="f_${k}" ${ty==="num"?'inputmode="decimal"':""} value="${esc(s[k]??"")}"></div>`).join("")}</div>
+    <div class="actions"><button class="btn" id="saveF">Enregistrer</button><button class="btn ghost" id="delF">Supprimer l’action</button></div>
+  </details>`;
+  view.querySelector("#pick").addEventListener("change",e=>{S.sel=e.target.value;render();});
+  view.querySelector("#toCalc").addEventListener("click",()=>{S.tab="calc";render();window.scrollTo(0,0);});
+  view.querySelector("#toWatch").addEventListener("click",async()=>{ if(!S.positions[t]) await savePos(t,{status:"watch",qty:0,pru:null,buyBelow:null}); S.tab="portfolio"; render(); });
+  view.querySelector("#saveF").addEventListener("click",async()=>{
+    const o={...s}; FIELDS.forEach(([k,,ty])=>{const v=view.querySelector("#f_"+k).value.trim(); o[k]= ty==="num"? num(v.replace(",",".")) : (v||null);});
+    await saveStock(t,o); toast("Données enregistrées.");
+  });
+  view.querySelector("#delF").addEventListener("click",async()=>{ if(!confirm(`Supprimer ${s.name||t} ?`))return; await delStock(t); S.sel=null; S.tab="screener"; render(); });
+  view.querySelector("#aiBtn").addEventListener("click",()=>runAi(t));
+}
+async function runAi(t){
+  const s=S.stocks[t]; const out=view.querySelector("#aiOut"); const btn=view.querySelector("#aiBtn");
+  btn.disabled=true; out.textContent="Analyse en cours…";
+  const prompt=`Tu es un analyste value investing dans l’esprit de Warren Buffett. Analyse l’entreprise ${s.name||t} (code ${t}, secteur : ${s.sector||"inconnu"}). En français, 180 mots maximum, sans titre : 1) nature et durabilité de l’avantage concurrentiel (moat) ; 2) qualité du management et de l’allocation du capital ; 3) deux risques principaux. Termine par une ligne « Moat suggéré : X/5 ». Précise que tes informations peuvent être datées.`;
+  try{
+    const r=await S.sample(prompt,{modelTier:"default",onText:({text})=>{out.textContent=text;}});
+    S.ai[t]=r.text; out.textContent=r.text;
+  }catch(e){
+    out.textContent = e&&e.code==="rate_limited" ? "Trop de demandes pour le moment. Réessaie dans quelques minutes." : e&&e.code==="not_granted" ? "Analyse non autorisée sur cette page." : "L’analyse n’a pas abouti. Réessaie plus tard.";
+  }finally{btn.disabled=false;}
+}
+
+function rCalc(){
+  const keys=Object.keys(S.stocks).sort(); const t=S.sel&&S.stocks[S.sel]?S.sel:keys[0];
+  const s=t?S.stocks[t]:{}; S.sel=t||null;
+  const base = s.fcfps ?? s.eps ?? "";
+  view.innerHTML = `
+  <div class="sheet">
+    <label for="cpick">Action</label><select id="cpick">${keys.map(k=>`<option value="${esc(k)}" ${k===t?"selected":""}>${esc(S.stocks[k].name||k)}</option>`).join("")||"<option>Aucune action</option>"}</select>
+    <p class="small muted" style="margin:8px 0 0">Méthode : actualisation des flux de trésorerie (DCF) sur 10 ans, puis valeur terminale.</p>
+  </div>
+  <div class="sheet">
+    <div class="grid2">
+      <div><label for="c_base">Flux de départ par action (€)</label><input id="c_base" inputmode="decimal" value="${esc(base)}"></div>
+      <div><label for="c_price">Cours actuel (€)</label><input id="c_price" inputmode="decimal" value="${esc(s.price??"")}"></div>
+      <div><label for="c_g1">Croissance années 1 à 5 (%)</label><input id="c_g1" inputmode="decimal" value="8"></div>
+      <div><label for="c_g2">Croissance années 6 à 10 (%)</label><input id="c_g2" inputmode="decimal" value="5"></div>
+      <div><label for="c_gt">Croissance perpétuelle (%)</label><input id="c_gt" inputmode="decimal" value="2.5"></div>
+      <div><label for="c_r">Taux d’actualisation (%)</label><input id="c_r" inputmode="decimal" value="9"></div>
+    </div>
+    <p class="small muted" style="margin:10px 0 0">Le flux de départ est le FCF par action s’il est renseigné, sinon le BPA. Sois prudent sur la croissance : c’est l’hypothèse qui pèse le plus.</p>
+  </div>
+  <div class="sheet" id="cOut"></div>`;
+  const ids=["c_base","c_price","c_g1","c_g2","c_gt","c_r"];
+  const calc=()=>{
+    const [b,p,g1,g2,gt,r]=ids.map(id=>num(view.querySelector("#"+id).value.replace(",",".")));
+    const o=view.querySelector("#cOut");
+    if(b==null||g1==null||g2==null||gt==null||r==null){o.innerHTML=`<p class="muted">Renseigne le flux de départ et les hypothèses.</p>`;return;}
+    if(r<=gt){o.innerHTML=`<p class="neg">Le taux d’actualisation doit être supérieur à la croissance perpétuelle.</p>`;return;}
+    let cf=b, pv=0; for(let y=1;y<=10;y++){cf*=1+(y<=5?g1:g2)/100; pv+=cf/Math.pow(1+r/100,y);}
+    const tv=cf*(1+gt/100)/((r-gt)/100); const pvtv=tv/Math.pow(1+r/100,10); const iv=pv+pvtv;
+    const mos=p?(1-p/iv)*100:null; const buy=iv*(1-MOS/100);
+    const gF = s.eps>0 ? s.eps*(8.5+2*Math.min(g1,15))*4.4/Math.max(r-4,1) : null;
+    o.innerHTML=`<div class="muted small">Valeur intrinsèque estimée</div><div class="big">${eur(iv)}</div>
+      ${mos!=null?`<p class="${mos>=0?"pos":"neg"}" style="margin:6px 0 0;font-weight:600">${mos>=0?`Marge de sécurité : ${fmt(mos,0)} %`:`Cours ${fmt(-mos,0)} % au-dessus de la valeur`}</p>`:""}
+      <dl class="kv" style="margin-top:12px">
+        <dt>Prix d’achat Buffett (marge ${MOS} %)</dt><dd>${eur(buy)}</dd>
+        <dt>Part de la valeur terminale</dt><dd>${fmt(pvtv/iv*100,0)} %</dd>
+        <dt>Formule de Graham (indicative)</dt><dd>${eur(gF)}</dd>
+      </dl>
+      ${pvtv/iv>0.75?`<p class="small muted">Plus de 75 % de la valeur vient de la valeur terminale : le résultat est très sensible aux hypothèses.</p>`:""}
+      ${t?`<div class="actions"><button class="btn" id="saveIv">Enregistrer ${eur(iv)} comme valeur intrinsèque</button></div>`:""}`;
+    addTips(o); const sv=o.querySelector("#saveIv"); if(sv) sv.addEventListener("click",async()=>{ await saveStock(t,{...S.stocks[t],intrinsic:Math.round(iv*100)/100}); toast("Valeur intrinsèque enregistrée."); });
+  };
+  ids.forEach(id=>view.querySelector("#"+id).addEventListener("input",calc));
+  view.querySelector("#cpick").addEventListener("change",e=>{S.sel=e.target.value;render();});
+  calc();
+}
+
+function rPortfolio(){
+  const rows=Object.entries(S.positions).map(([t,p])=>({t,...p,s:S.stocks[t]||{}}));
+  const held=rows.filter(r=>r.status==="held"&&r.qty>0), watch=rows.filter(r=>r.status!=="held"||!(r.qty>0));
+  let val=0,cost=0; held.forEach(r=>{ if(r.s.price){val+=r.qty*r.s.price;} if(r.pru){cost+=r.qty*r.pru;} });
+  const pl=val-cost;
+  view.innerHTML=`
+  ${planHtml()}
+  ${held.length?`<div class="sheet"><div class="muted small">Valeur du portefeuille</div><div class="big">${eur(val)}</div>
+    ${cost?`<p class="${pl>=0?"pos":"neg"}" style="margin:6px 0 0;font-weight:600">${pl>=0?"+":""}${eur(pl)} (${fmt(pl/cost*100)} %)</p>`:""}${(()=>{ const n=held.filter(r=>{const a=sellAlert(r.t);return a&&a.k!=="keep";}).length; return `<p class="small" style="margin:6px 0 0">${n?`${n} alerte${n>1?"s":""} de vente à examiner ci-dessous.`:"Aucune alerte de vente : on garde."}</p>`; })()}</div>`:""}
+  <h2>Positions</h2>
+  <div class="list">${held.length?held.map(posHtml).join(""):`<div class="empty">Aucune position. Passe une action suivie en « détenue » pour la voir ici.</div>`}</div>
+  <h2>Liste de suivi</h2>
+  <div class="list">${watch.length?watch.map(posHtml).join(""):`<div class="empty">Ouvre une fiche et touche « Suivre » pour ajouter une action.</div>`}</div>`;
+  view.querySelectorAll("[data-edit]").forEach(b=>b.addEventListener("click",()=>{const box=view.querySelector("#e_"+CSS.escape(b.dataset.edit)); box.hidden=!box.hidden;}));
+  view.querySelectorAll("[data-savepos]").forEach(b=>b.addEventListener("click",async()=>{
+    const t=b.dataset.savepos, g=k=>view.querySelector(`#${k}_${CSS.escape(t)}`).value;
+    await savePos(t,{...S.positions[t],status:g("st"),qty:num(g("q").replace(",","."))||0,pru:num(g("p").replace(",",".")),buyBelow:num(g("b").replace(",","."))}); toast("Position enregistrée.");
+  }));
+  view.querySelectorAll("[data-delpos]").forEach(b=>b.addEventListener("click",async()=>{await delPos(b.dataset.delpos);}));
+  bindPlan();
+}
+/* ---------- Plan d’investissement mensuel ---------- */
+function heldValue(t){ const p=S.positions[t], s=S.stocks[t]; return p&&p.status==="held"&&p.qty>0&&s&&s.price? p.qty*s.price : 0; }
+function planCalc(){
+  const P=S.plan, all=stocksArr();
+  const cands=all.filter(s=>signalOf(s).k==="buy"&&s.price>0).sort((a,b)=>b._d.mos-a._d.mos).slice(0,Math.max(1,P.lines|0));
+  const near=all.filter(s=>signalOf(s).k==="wait").sort((a,b)=>b._d.mos-a._d.mos).slice(0,3);
+  if(!cands.length||!(P.amount>0)) return {cands,near,orders:[],left:P.amount||0};
+  const total=cands.reduce((a,s)=>a+heldValue(s.t),0)+P.amount, target=total/cands.length;
+  const gaps=cands.map(s=>({s,held:heldValue(s.t),gap:target-heldValue(s.t)})).sort((a,b)=>b.gap-a.gap);
+  const minOrder=Math.max(50,(P.fee||0)/0.01);
+  const n=clamp(Math.floor(P.amount/minOrder),1,cands.length);
+  let pick=gaps.slice(0,n).filter(g=>g.gap>0); if(!pick.length) pick=[gaps[0]];
+  const gsum=pick.reduce((a,g)=>a+Math.max(g.gap,1),0);
+  let left=P.amount; const orders=pick.map(g=>{ const alloc=P.amount*Math.max(g.gap,1)/gsum; const q=P.frac? Math.floor(alloc/g.s.price*1000)/1000 : Math.floor(alloc/g.s.price); left-=q*g.s.price; return {s:g.s,held:g.held,alloc,qty:q}; });
+  if(!P.frac){ while(true){ const c=orders.filter(o=>left>=o.s.price).sort((a,b)=>(a.qty*a.s.price+a.held)-(b.qty*b.s.price+b.held))[0]; if(!c) break; c.qty++; left-=c.s.price; } }
+  return {cands,near,orders,left,target,total};
+}
+function planHtml(){
+  const P=S.plan, r=planCalc();
+  const inputs=`<div class="grid2" style="margin-top:10px">
+    <div><label for="pl_amount">Montant mensuel (€)</label><input id="pl_amount" inputmode="decimal" value="${esc(P.amount)}"></div>
+    <div><label for="pl_lines">Nombre de lignes visé</label><input id="pl_lines" inputmode="numeric" value="${esc(P.lines)}"></div>
+    <div><label for="pl_fee">Frais par ordre (€)</label><input id="pl_fee" inputmode="decimal" value="${esc(P.fee)}"></div>
+    <div><label for="pl_frac">Fractions d’actions</label><select id="pl_frac"><option value="0" ${P.frac?"":"selected"}>Non</option><option value="1" ${P.frac?"selected":""}>Oui</option></select></div></div>`;
+  let body;
+  if(!r.cands.length){
+    body=`<p style="margin:12px 0 6px;font-weight:600">Aucune action n’est sous son prix d’achat Buffett ce mois-ci.</p>
+    <p class="small" style="margin:0">La discipline de la marge de sécurité, c’est d’attendre : garde ${eur(P.amount)} de côté (ou place-les sur ton ETF) et reviens le mois prochain.</p>
+    ${r.near.length?`<p class="small muted" style="margin:8px 0 0">Les plus proches : ${r.near.map(s=>`${esc(s.name||s.t)} (achat sous ${eur(s._d.buy)})`).join(", ")}.</p>`:""}`;
+  } else {
+    const few=r.cands.length<P.lines;
+    body=`<div style="margin-top:12px;font-weight:600">Ce mois-ci</div>
+    <div class="list" style="margin-top:6px">${r.orders.map(o=>`<div style="display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid var(--rule);padding:8px 0">
+      <div><div style="font-weight:600">${esc(o.s.name||o.s.t)}</div><div class="small muted">Marge de sécurité ${fmt(o.s._d.mos,0)} % · cours ${eur(o.s.price)}</div></div>
+      <div style="text-align:right">${o.qty>0?`<div style="font-weight:700">${eur(o.qty*o.s.price)}</div><div class="small muted">${fmt(o.qty,3)} action${o.qty>1?"s":""}</div>`:`<div class="small muted">Trop chère ce mois-ci</div>`}</div></div>`).join("")}</div>
+    <p class="small" style="margin:8px 0 0">${r.left>=1?`À garder pour le mois prochain : <strong>${eur(r.left)}</strong>. `:""}${P.fee>0?`Frais : ${eur(P.fee*r.orders.filter(o=>o.qty>0).length)}.`:""}</p>
+    <p class="small muted" style="margin:8px 0 0">Lignes cibles (${r.cands.length}) : ${r.cands.map(s=>esc(s.name||s.t)).join(", ")}. Chacune vise ${fmt(100/r.cands.length,0)} % du portefeuille ; chaque mois, l’argent va à celles qui sont le plus en retard.</p>
+    ${few?`<p class="small" style="margin:8px 0 0">Seulement ${r.cands.length} action${r.cands.length>1?"s passent":" passe"} tous les critères aujourd’hui, pour ${P.lines} lignes visées : ta diversification est limitée. D’autres s’ajouteront quand elles passeront sous leur prix d’achat.</p>`:""}
+    ${r.orders.some(o=>o.qty>0)?`<div class="actions"><button class="btn" id="plDone">J’ai passé ces ordres</button></div>`:""}`;
+  }
+  return `<div class="sheet"><div style="font-family:var(--serif);font-weight:700;font-size:1.2rem">Plan du mois</div>
+    <p class="small muted" style="margin:2px 0 0">Répartit ton montant entre les actions en signal « Achat », sans tout miser sur une seule.</p>${inputs}${body}</div>`;
+}
+function bindPlan(){
+  const save=async()=>{ render(); if(S.db){ try{await S.db.doc("settings/plan").set(S.plan);}catch(e){} } };
+  [["pl_amount","amount"],["pl_lines","lines"],["pl_fee","fee"]].forEach(([id,k])=>view.querySelector("#"+id).addEventListener("change",e=>{ const v=num(e.target.value.replace(",",".")); if(v!=null&&v>=0){ S.plan[k]= k==="lines"?Math.max(1,Math.round(v)):v; save(); } }));
+  view.querySelector("#pl_frac").addEventListener("change",e=>{ S.plan.frac=e.target.value==="1"; save(); });
+  const d=view.querySelector("#plDone"); if(d) d.addEventListener("click",async()=>{
+    const r=planCalc();
+    for(const o of r.orders){ if(!(o.qty>0)) continue; const p=S.positions[o.s.t]||{status:"watch",qty:0,pru:null,buyBelow:null};
+      const oq=p.status==="held"?(p.qty||0):0, nq=oq+o.qty; const pru=((p.pru||0)*oq + o.qty*o.s.price + (S.plan.fee||0))/nq;
+      await savePos(o.s.t,{...p,status:"held",qty:Math.round(nq*1000)/1000,pru:Math.round(pru*100)/100}); }
+    toast("Achats ajoutés au portefeuille.");
+  });
+}
+function posHtml(r){
+  const p=r.s.price, buy=r.buyBelow ?? derived(r.s).buy;
+  const gap = p&&buy ? (p/buy-1)*100 : null; const pl = r.status==="held"&&r.pru&&p ? (p/r.pru-1)*100 : null;
+  return `<div class="sheet" style="margin:0">
+    <div style="display:flex;justify-content:space-between;gap:10px"><div><div style="font-weight:600">${esc(r.s.name||r.t)}</div>
+      <div class="small muted">${eur(p)}${r.status==="held"?` · ${fmt(r.qty,2)} titres · PRU ${eur(r.pru)}`:""}</div></div>
+      <div style="text-align:right" class="small">${pl!=null?`<div class="${pl>=0?"pos":"neg"}" style="font-weight:700">${pl>=0?"+":""}${fmt(pl)} %</div>`:""}
+      ${gap!=null?`<div class="${gap<=0?"pos":"muted"}">${gap<=0?"Sous le prix d’achat":`À ${fmt(gap,0)} % du prix d’achat`}</div>`:`<div class="muted">Prix d’achat non défini</div>`}</div></div>
+  ${(()=>{ const a=r.status==="held"?sellAlert(r.t):null; return a?`<div class="alert"><span class="sig sig-${a.k}">${a.l}</span>${a.reasons.length?` <span class="muted">${esc(a.reasons.join(" · "))}</span>`:""}${r.thesis&&r.thesis.at?`<div class="small muted" style="margin-top:3px">Comparé à la situation du ${esc(new Date(r.thesis.at).toLocaleDateString("fr-FR"))}</div>`:""}</div>`:""; })()}
+    <div class="actions"><button class="btn ghost" data-edit="${esc(r.t)}">Modifier</button></div>
+    <div id="e_${esc(r.t)}" hidden style="margin-top:10px"><div class="grid2">
+      <div><label for="st_${esc(r.t)}">Statut</label><select id="st_${esc(r.t)}"><option value="watch" ${r.status!=="held"?"selected":""}>Suivie</option><option value="held" ${r.status==="held"?"selected":""}>Détenue</option></select></div>
+      <div><label for="b_${esc(r.t)}">Acheter sous (€)</label><input id="b_${esc(r.t)}" inputmode="decimal" value="${esc(r.buyBelow??"")}" placeholder="${buy?fmt(buy,2):"auto : valeur −30 %"}"></div>
+      <div><label for="q_${esc(r.t)}">Quantité</label><input id="q_${esc(r.t)}" inputmode="decimal" value="${esc(r.qty??"")}"></div>
+      <div><label for="p_${esc(r.t)}">Prix de revient (€)</label><input id="p_${esc(r.t)}" inputmode="decimal" value="${esc(r.pru??"")}"></div></div>
+      <div class="actions"><button class="btn" data-savepos="${esc(r.t)}">Enregistrer</button><button class="btn ghost" data-delpos="${esc(r.t)}">Retirer</button></div></div>
+  </div>`;
+}
+
+/* ---------- Simulateur historique ---------- */
+function backtest(rowsIn,P){
+  const rows=[...rowsIn].filter(r=>r.y!=null&&r.price>0).sort((a,b)=>a.y-b.y);
+  if(rows.length<5) return null;
+  const i0=3, start=10000;
+  let cash=start, sh=0, trades=0, yearsIn=0;
+  let bhSh=start/rows[i0].price, bhCash=0;
+  const out=[];
+  for(let i=i0;i<rows.length;i++){
+    const r=rows[i];
+    const last3=rows.slice(i-2,i+1).map(x=>x.eps).filter(x=>x>0);
+    const base=last3.length?last3.reduce((a,b)=>a+b,0)/last3.length:null;
+    const k=Math.min(5,i); const e0=rows[i-k].eps, e1=r.eps;
+    const g = e0>0&&e1>0 ? clamp((Math.pow(e1/e0,1/k)-1)*100,0,12) : 0;
+    const iv=dcf(base,g,g/2,GT,P.r);
+    if(i>i0){ if(sh>0){cash+=sh*(r.dps||0); yearsIn++;} bhCash+=bhSh*(r.dps||0); }
+    let act="";
+    if(iv){
+      if(sh===0 && r.price<=iv*(1-P.mos/100)){ sh=cash/r.price; cash=0; trades++; act="Achat"; }
+      else if(sh>0 && P.sell==="value" && r.price>=iv){ cash=sh*r.price; sh=0; act="Vente"; }
+    }
+    out.push({y:r.y,price:r.price,iv,g,act,held:sh>0,val:cash+sh*r.price,bh:bhSh*r.price+bhCash});
+  }
+  const n=rows[rows.length-1].y-rows[i0].y;
+  const last=out[out.length-1];
+  const cagr=v=> n>0? (Math.pow(v/start,1/n)-1)*100 : null;
+  return {out,n,start,trades,yearsIn,final:last.val,bhFinal:last.bh,cagr:cagr(last.val),bhCagr:cagr(last.bh),y0:rows[i0].y};
+}
+function chartSvg(out){
+  const W=340,H=150,p=8; const vals=out.flatMap(o=>[o.val,o.bh]); const mx=Math.max(...vals)*1.05, mn=0;
+  const x=i=>p+(W-2*p)*(out.length>1?i/(out.length-1):0), y=v=>H-p-(H-2*p)*(v-mn)/(mx-mn||1);
+  const line=k=>out.map((o,i)=>`${i?"L":"M"}${x(i).toFixed(1)},${y(o[k]).toFixed(1)}`).join("");
+  const dots=out.map((o,i)=>o.act?`<circle cx="${x(i).toFixed(1)}" cy="${y(o.val).toFixed(1)}" r="4" fill="${o.act==="Achat"?"var(--green)":"var(--red)"}"/>`:"").join("");
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Évolution de 10 000 € : stratégie contre achat-conservation">
+    <line x1="${p}" x2="${W-p}" y1="${y(10000)}" y2="${y(10000)}" stroke="var(--rule)" stroke-dasharray="3 3"/>
+    <path d="${line("bh")}" fill="none" stroke="var(--muted)" stroke-width="2"/>
+    <path d="${line("val")}" fill="none" stroke="var(--green)" stroke-width="2.5"/>${dots}</svg>
+    <div class="legend"><span><i style="background:var(--green)"></i>Méthode Buffett</span><span><i style="background:var(--muted)"></i>Achat dès le départ</span></div>`;
+}
+function rSim(){
+  const keys=Object.keys(S.stocks).sort(); const hk=Object.keys(S.history);
+  const t = S.simT && S.stocks[S.simT] ? S.simT : (hk[0] || keys[0]); S.simT=t||null;
+  const P=S.simP; const h=t?S.history[t]:null; const rows=h&&h.rows||[];
+  const res = rows.length? backtest(rows,P):null;
+  const all = hk.map(k=>({k,r:backtest(S.history[k].rows||[],P)})).filter(x=>x.r);
+  view.innerHTML=`
+  <div class="notice">Le simulateur rejoue la méthode année par année avec uniquement les données connues à l’époque : valeur intrinsèque par DCF sur la moyenne des 3 derniers BPA, croissance passée plafonnée à 12 %, achat quand le cours passe ${P.mos} % sous la valeur.</div>
+  <div class="sheet">
+    <label for="spick">Action</label><select id="spick">${keys.map(k=>`<option value="${esc(k)}" ${k===t?"selected":""}>${esc(S.stocks[k].name||k)}${S.history[k]?"":" (sans historique)"}</option>`).join("")}</select>
+    <div class="grid3" style="margin-top:10px">
+      <div><label for="p_mos">Marge (%)</label><input id="p_mos" inputmode="decimal" value="${P.mos}"></div>
+      <div><label for="p_r">Taux (%)</label><input id="p_r" inputmode="decimal" value="${P.r}"></div>
+      <div><label for="p_sell">Revente</label><select id="p_sell"><option value="value" ${P.sell==="value"?"selected":""}>À la valeur</option><option value="hold" ${P.sell==="hold"?"selected":""}>Jamais</option></select></div>
+    </div>
+  </div>
+  ${res?`<div class="sheet">
+    <div class="grid2">
+      <div><div class="muted small">Méthode Buffett</div><div class="big ${res.final>=res.bhFinal?"pos":""}" style="font-size:1.8rem">${eur(Math.round(res.final))}</div><div class="small">${res.cagr!=null?`${fmt(res.cagr)} % par an`:""}</div></div>
+      <div><div class="muted small">Achat dès ${res.y0}</div><div class="big" style="font-size:1.8rem">${eur(Math.round(res.bhFinal))}</div><div class="small">${res.bhCagr!=null?`${fmt(res.bhCagr)} % par an`:""}</div></div>
+    </div>
+    <p class="small muted" style="margin:10px 0 0">10 000 € de départ en ${res.y0}, sur ${res.n} ans. ${res.trades} achat${res.trades>1?"s":""}, investi ${res.yearsIn} an${res.yearsIn>1?"s":""} sur ${res.n}. Dividendes conservés en liquidités dans les deux cas.</p>
+    ${chartSvg(res.out)}
+  </div>
+  <div class="sheet scrollx"><table class="t"><thead><tr><th>Année</th><th>Cours</th><th>Valeur est.</th><th>Prix achat</th><th>Action</th><th>Portef.</th></tr></thead><tbody>
+    ${res.out.map(o=>`<tr><td>${o.y}</td><td>${fmt(o.price,0)}</td><td>${fmt(o.iv,0)}</td><td>${o.iv?fmt(o.iv*(1-P.mos/100),0):"—"}</td><td class="${o.act==="Achat"?"pos":o.act==="Vente"?"neg":"muted"}">${o.act||(o.held?"Détenu":"—")}</td><td>${fmt(o.val,0)}</td></tr>`).join("")}
+  </tbody></table></div>`
+  : `<div class="sheet empty">${t?"Pas assez d’historique pour cette action (5 années minimum). Ajoute-le ci-dessous.":"Ajoute d’abord une action."}</div>`}
+  ${all.length>1?`<h2>Toutes les actions</h2><div class="sheet scrollx"><table class="t"><thead><tr><th>Action</th><th>Depuis</th><th>Buffett</th><th>Achat initial</th></tr></thead><tbody>
+    ${all.map(({k,r})=>`<tr><td>${esc(S.stocks[k]?.name||k)}</td><td>${r.y0}</td><td class="${r.cagr>=r.bhCagr?"pos":""}">${fmt(r.cagr)} %/an</td><td>${fmt(r.bhCagr)} %/an</td></tr>`).join("")}
+  </tbody></table></div>`:""}
+  <div class="sheet">
+    <div style="font-weight:600">Limites à garder en tête</div>
+    <p class="small" style="margin:6px 0 0">Biais du survivant : on teste des entreprises qui existent et ont réussi. Les données annuelles sont approximatives et lissent les points bas en cours d’année. Le moat est jugé aujourd’hui, pas à l’époque. Un bon résultat passé ne garantit rien.</p>
+  </div>
+  ${t?`<details class="sheet"><summary>Modifier l’historique de ${esc(S.stocks[t]?.name||t)}</summary>
+    <p class="small muted">Une ligne par année : année;cours de fin d’année;BPA;dividende</p>
+    <textarea id="histTxt" aria-label="Historique annuel">${esc(rows.map(r=>[r.y,r.price,r.eps??"",r.dps??""].join(";")).join("\n"))}</textarea>
+    ${h&&h.note?`<p class="small muted">${esc(h.note)}</p>`:""}
+    <div class="actions"><button class="btn" id="saveHist">Enregistrer l’historique</button></div></details>`:""}`;
+  view.querySelector("#spick")?.addEventListener("change",e=>{S.simT=e.target.value;render();});
+  [["p_mos","mos"],["p_r","r"]].forEach(([id,k])=>view.querySelector("#"+id).addEventListener("change",e=>{const v=num(e.target.value.replace(",","."));if(v!=null){S.simP[k]=v;render();}}));
+  view.querySelector("#p_sell").addEventListener("change",e=>{S.simP.sell=e.target.value;render();});
+  const sb=view.querySelector("#saveHist"); if(sb) sb.addEventListener("click",async()=>{
+    const rowsNew=view.querySelector("#histTxt").value.split(/\n+/).map(l=>l.split(/[;\t]/).map(x=>num(x.trim().replace(",",".")))).filter(a=>a[0]&&a[1]).map(a=>({y:a[0],price:a[1],eps:a[2],dps:a[3]}));
+    if(!S.db){toast("Enregistrement impossible sans connexion.");return;}
+    const doc={...(h||{}),rows:rowsNew}; S.history[t]=doc; render();
+    try{await S.db.doc("history/"+t).set(doc); toast("Historique enregistré.");}catch(e){toast("Échec de l’enregistrement.");}
+  });
+}
+
+/* ---------- Données ---------- */
+function toast(msg){ const st=document.getElementById("status"); st.textContent=msg; clearTimeout(toast._t); toast._t=setTimeout(updStatus,2500); }
+function updStatus(){ const st=document.getElementById("status"); const n=Object.keys(S.stocks).length;
+  st.textContent = S.db ? `${n} action${n>1?"s":""} suivie${n>1?"s":""} · ton carnet privé` : "Données indisponibles : vérifie config.js et ta connexion."; }
+async function saveStock(t,o){ if(!S.db){toast("Enregistrement impossible sans connexion.");return;} const c={}; Object.entries(o).forEach(([k,v])=>{if(v!==undefined&&!k.startsWith("_"))c[k]=v;}); S.stocks[t]=c; render(); try{await S.db.doc("stocks/"+t).set(c);}catch(e){toast("Échec de l’enregistrement.");} }
+async function delStock(t){ if(!S.db)return; delete S.stocks[t]; try{await S.db.doc("stocks/"+t).delete();}catch(e){toast("Échec de la suppression.");} }
+/* Alertes de vente : on vend quand l’entreprise change, pas quand le cours change */
+function sellAlert(t){
+  const p=S.positions[t], s=S.stocks[t]; if(!p||p.status!=="held"||!s) return null;
+  const th=p.thesis||{}, R=[]; const r=s.roic??s.roe, r0=th.roic??th.roe;
+  if(s.moat!=null && (s.moat<4 || (th.moat!=null && s.moat<th.moat))) R.push(`moat à ${fmt(s.moat)}/5${th.moat!=null&&th.moat!==s.moat?` (contre ${fmt(th.moat)}/5 à l’achat)`:""}`);
+  if(r!=null && (r<15 || (r0!=null && r<=r0-5))) R.push(`rentabilité ${fmt(r)} %${r0!=null&&r0!==r?` (contre ${fmt(r0)} %)`:""}`);
+  if(s.opMargin!=null && th.opMargin!=null && s.opMargin<=th.opMargin-5) R.push(`marge ${fmt(s.opMargin)} % (contre ${fmt(th.opMargin)} %)`);
+  if(s.netDebtEbitda!=null && (s.netDebtEbitda>2.5 || (th.netDebtEbitda!=null && s.netDebtEbitda>=th.netDebtEbitda+1))) R.push(`dette ${fmt(s.netDebtEbitda)}× l’EBITDA`);
+  if(s.eps!=null && th.eps>0 && s.eps<=th.eps*0.75) R.push(`BPA en baisse de ${fmt((1-s.eps/th.eps)*100,0)} %`);
+  if(R.length) return {k:"review",l:"Thèse à revoir",reasons:R};
+  const d=derived(s); if(d.mos!=null && d.mos<=-50) return {k:"over",l:"Très surévaluée",reasons:[`cours ${fmt(-d.mos,0)} % au-dessus de la valeur intrinsèque`]};
+  return {k:"keep",l:"Conserver",reasons:[]};
+}
+async function savePos(t,o){ if(!S.db){toast("Enregistrement impossible sans connexion.");return;} if(o.status==="held"&&!o.thesis&&S.stocks[t]){ const s=S.stocks[t]; o={...o,thesis:{roe:s.roe??null,roic:s.roic??null,opMargin:s.opMargin??null,netDebtEbitda:s.netDebtEbitda??null,moat:s.moat??null,eps:s.eps??null,at:new Date().toISOString().slice(0,10)}}; } S.positions[t]=o; render(); try{await S.db.doc("positions/"+t).set(o);}catch(e){toast("Échec de l’enregistrement.");} }
+async function delPos(t){ if(!S.db)return; delete S.positions[t]; render(); try{await S.db.doc("positions/"+t).delete();}catch(e){toast("Échec de la suppression.");} }
+
+document.querySelectorAll("nav button").forEach(b=>b.addEventListener("click",()=>{S.tab=b.dataset.tab;render();window.scrollTo(0,0);}));
+render();
+
+(async()=>{
+  const db = window.claude ? await window.claude.use("db") : null;
+  if(!db){ updStatus(); return; }
+  S.db=db; updStatus();
+  db.collection("stocks").onSnapshot(q=>{ const o={}; q.docs.forEach(d=>o[d.id]=d.data()); S.stocks=o; updStatus(); if(!document.activeElement||!view.contains(document.activeElement)||S.tab==="screener"&&document.activeElement.tagName!=="INPUT") render(); }, ()=>toast("Connexion aux données interrompue. Recharge la page."));
+  db.collection("history").onSnapshot(q=>{ const o={}; q.docs.forEach(d=>o[d.id]=d.data()); S.history=o; if(S.tab==="sim"&&!(document.activeElement&&/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))) render(); }, ()=>{});
+  db.doc("settings/plan").onSnapshot(d=>{ if(d.exists){ S.plan={...S.plan,...d.data()}; if(S.tab==="portfolio"&&!(document.activeElement&&/INPUT|SELECT/.test(document.activeElement.tagName))) render(); } }, ()=>{});
+  db.doc("requests/latest").onSnapshot(d=>{ S.req=d.exists?d.data():null; if(S.tab==="screener"&&!(document.activeElement&&document.activeElement.tagName==="INPUT")) render(); }, ()=>{});
+  db.collection("positions").onSnapshot(q=>{ const o={}; q.docs.forEach(d=>o[d.id]=d.data()); S.positions=o; if(S.tab==="portfolio"&&!(document.activeElement&&document.activeElement.tagName==="INPUT")) render(); }, ()=>{});
+})();
+(async()=>{ const sm = window.claude ? await window.claude.use("sample") : null; if(sm){ S.sample=sm; if(S.tab==="fiche") render(); } })();
+</script>
+<p style="text-align:center;margin:0 0 20px"><button class="btn ghost" onclick="carnetLogout()" style="font-size:.8rem;padding:6px 10px">Se déconnecter</button></p>
+<script>
+if ("serviceWorker" in navigator) { window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(() => {})); }
+</script>
+</body>
+</html>
